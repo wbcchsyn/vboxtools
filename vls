@@ -1,0 +1,39 @@
+#!/usr/bin/env python
+#-*- coding: utf-8 -*-
+
+from vm import Vm
+
+def is_running(vm):
+    return vm.status.startswith('running')
+
+if __name__ == '__main__':
+
+    vms = [Vm(name) for name in Vm.list_vms()]
+    
+    statuses = ['run'] + ['*' if is_running(vm) else '' for vm in vms]
+    names = ['VM Name'] + [vm.name for vm in vms]
+    cores = ['CPU'] + [str(vm.core) for vm in vms]
+    memories = ['Mem'] + [vm.memory for vm in vms]
+
+    ssh_ports = ['SSH Host Port']
+    for vm in vms:
+        port = [rule['host port'] for rule in vm.port_forward
+                if rule['name'] == 'ssh']
+        try:
+            if is_running(vm):
+                ssh_ports.append(port[0])
+            else:
+                ssh_ports.append('')
+        except IndexError:
+            ssh_ports.append('')
+
+    format = '%%-%ds %%-%ds %%-%ds %%-%ds %%-%ds' % (
+        max(map(len, statuses)),
+        max(map(len, names)),
+        max(map(len, cores)),
+        max(map(len, memories)),
+        max(map(len, ssh_ports)),
+    )
+
+    for status, name, core, memory, port in zip(statuses, names, cores, memories, ssh_ports):
+        print(format % (status, name, core, memory, port))
