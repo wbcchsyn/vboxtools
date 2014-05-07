@@ -155,4 +155,5 @@ class Vm(object):
             return ret
         finally:
             if child:
-                child.wait()
+                if not child.wait() == 0:
+                    raise RuntimeError('Failed cmd %s' % cmd_list)
