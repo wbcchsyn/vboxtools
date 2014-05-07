@@ -1,0 +1,44 @@
+#!/usr/bin/env python
+#-*- coding: utf-8 -*-
+
+from vm import Vm
+import sys
+import random
+import errno
+import socket
+
+def is_available_port(port):
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.bind(('127.0.0.1', port))
+
+        return True
+    except OSError as e:
+        if e.errno == errno.EADDRINUSE:
+            return False
+
+def up(name):
+    vm = Vm(name)
+
+    try:
+        rule = [rule for rule in vm.port_forward if rule['name'] == 'ssh'][0]
+
+        host_port = int(rule['host port'])
+        while not is_available_port(host_port):
+            host_port = random.randrange(49153, 65536)
+
+        if not rule['host port'] == host_port:
+            vm.del_port_forward(rule)
+            rule['host port'] = host_port
+            vm.set_port_forward(rule)
+
+    except IndexError:
+        pass
+
+    vm.up()
+    sys.stdout.write('%s is starting.\n' % name)
+
+if __name__ == '__main__':
+
+    for vm in sys.argv[1:]:
+        up(vm)

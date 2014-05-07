@@ -139,6 +139,42 @@ class Vm(object):
 
         return ret
 
+    def del_port_forward(self, rule):
+        try:
+            if not self.nics[rule['nic']]['Attachment'] == "NAT":
+                raise RuntimeError("NIC %d is not NAT." % rule['nic'])
+
+            self.__call(VBoxManage, 'modifyvm', self.name,
+                        '--natpf%s' % rule['nic'], 'delete', rule['name'])
+        except KeyError as e:
+            raise ArgumentError('Argument rule is requested to be dict and has'
+                                ' %s key.' %
+                                e.args[0])
+
+    def set_port_forward(self, rule):
+
+        try:
+            if not self.nics[rule['nic']]['Attachment'] == "NAT":
+                raise RuntimeError("NIC %d is not NAT." % rule['nic'])
+
+            self.__call(VBoxManage, 'modifyvm', self.name,
+                        '--natpf%d' % rule['nic'],
+                        '%s,%s,%s,%s,%s,%s' % (rule['name'],
+                                               rule['protocol'],
+                                               rule['host ip'],
+                                               rule['host port'],
+                                               rule['guest ip'],
+                                               rule['guest port']))
+        except KeyError as e:
+            raise ArgumentError('Argument rule is requested to be dict and has'
+                                ' key %s.' % e.args[0])
+
+    def up(self, headless=True):
+        if headless:
+            self.__call(VBoxManage, 'startvm', self.name, '--type', 'headless')
+        else:
+            self.__call(VBoxManage, 'startvm', self.name, '--type', 'gui')
+
     @staticmethod
     def __call(*cmd_list):
         """
