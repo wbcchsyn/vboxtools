@@ -3,7 +3,6 @@
 
 from vm import Vm
 from optparse import OptionParser
-import os
 
 if __name__ == '__main__':
 
@@ -50,9 +49,9 @@ if __name__ == '__main__':
 
     else:
         format = '%%-%ds %%-%ds' % (
+            max(map(len, statuses)),
             max(map(len, names)),
-            max(map(len, ssh_ports)),
         )
 
-        for name, port in zip(names, ssh_ports,):
-            print(format % (name, port,))
+        for status, name in zip(statuses, names,):
+            print(format % (status, name,))
