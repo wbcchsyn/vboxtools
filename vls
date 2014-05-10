@@ -4,15 +4,12 @@
 from vm import Vm
 
 
-def is_running(vm):
-    return vm.status.startswith('running')
-
 if __name__ == '__main__':
 
     vms = [Vm(name) for name in Vm.list_vms()]
 
-    statuses = ['run'] + ['*' if is_running(vm) else '' for vm in vms]
-    names = ['VM Name'] + [vm.name for vm in vms]
+    statuses = ['run'] + ['*' if vm.is_running else '' for vm in vms]
+    names = ['Name'] + [vm.name for vm in vms]
     cores = ['CPU'] + [str(vm.core) for vm in vms]
     memories = ['Mem'] + [vm.memory for vm in vms]
 
@@ -21,7 +18,7 @@ if __name__ == '__main__':
         port = [rule['host port'] for rule in vm.port_forward
                 if rule['name'] == 'ssh']
         try:
-            if is_running(vm):
+            if vm.is_running:
                 ssh_ports.append(port[0])
             else:
                 ssh_ports.append('')
