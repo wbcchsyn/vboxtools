@@ -182,6 +182,8 @@ class Vm(object):
 
     @property
     def ssh_port(self):
+        """ Return local port of port forwarding named 'ssh' """
+
         rule = self.__ssh_port_forward_rule()
         if rule:
             return int(rule['host port'])
@@ -189,6 +191,8 @@ class Vm(object):
             return None
 
     def set_ssh_port(self, port):
+        """ Create a port forward rule to guest 22 port named 'ssh' """
+
         rule = self.__ssh_port_forward_rule()
         if rule:
             self.__call(VBoxManage, 'modifyvm', self.name,
@@ -204,21 +208,39 @@ class Vm(object):
         self.__info = None
 
     def up(self, gui=False):
+        """ Start VM """
+
         if gui:
             self.__call(VBoxManage, 'startvm', self.name, '--type', 'gui')
         else:
             self.__call(VBoxManage, 'startvm', self.name, '--type', 'headless')
 
     def acpi(self):
+        """ Send ACPI signal. """
+
         self.__call(VBoxManage, 'controlvm', self.name, 'acpipowerbutton')
 
     def unregister(self):
+        """ Unregister VM and delete all files. """
+
         self.__call(VBoxManage, 'unregistervm', self.name, '--delete')
 
     def poweroff(self):
+        """ Poweroff VM forcely. """
+
         self.__call(VBoxManage, 'controlvm', self.name, 'poweroff')
 
     def clone(self, new_name, snapshot=None, full=False):
+        """ Create a clone VM.
+
+        If argument 'full' is True, copy all image files and create a full
+        clone. Otherwise, create a linked clone using snapshot. To use linked
+        clone, VM must have at least one snapshot.
+
+        If argument 'snapshot' is None, use current snapshot to create linked
+        clone.
+        """
+
         cmd = [VBoxManage, 'clonevm', self.name, '--register',
                '--name', new_name]
         if not full:
@@ -229,6 +251,8 @@ class Vm(object):
         self.__call(*cmd)
 
     def snap_list(self):
+        """ Return list of snapshot dicts. """
+
         pattern = re.compile(r'^(?P<indent> +)Name: (?P<name>.*) '
                              r'\(UUID: (?P<uuid>[a-f0-9\-]+)\)'
                              r'(?P<current> \*)?$')
@@ -242,12 +266,21 @@ class Vm(object):
         ]
 
     def snap_take(self, name):
+        """ Create a new snapshot. """
+
         self.__call(VBoxManage, 'snapshot', self.name, 'take', name)
 
     def snap_remove(self, name):
+        """ Remove specified snapshot. """
+
         self.__call(VBoxManage, 'snapshot', self.name, 'delete', name)
 
     def snap_restore(self, name=None):
+        """ Restore to snapshot.
+
+        If argument name is None, restore to current one.
+        """
+
         if name is None:
             self.__call(VBoxManage, 'snapshot', self.name, 'restorecurrent')
         else:
@@ -256,7 +289,7 @@ class Vm(object):
     @staticmethod
     def __call(*cmd_list):
         """
-        Execute shell command and return its stdout.
+        Execute shell command and return list of the stdout.
         """
 
         child = None
