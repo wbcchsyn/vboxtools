@@ -188,6 +188,12 @@ class Vm(object):
     def snap_remove(self, name):
         self.__call(VBoxManage, 'snapshot', self.name, 'delete', name)
 
+    def snap_restore(self, name=None):
+        if name is None:
+            self.__call(VBoxManage, 'snapshot', self.name, 'restorecurrent')
+        else:
+            self.__call(VBoxManage, 'snapshot', self.name, 'restore', name)
+
     @staticmethod
     def __call(*cmd_list):
         """
