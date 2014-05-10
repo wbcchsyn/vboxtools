@@ -182,8 +182,9 @@ class Vm(object):
 
     @property
     def ssh_port(self):
-        if self.is_running:
-            return int(self.__ssh_port_forward_rule()['host port'])
+        rule = self.__ssh_port_forward_rule()
+        if rule:
+            return int(rule['host port'])
         else:
             return None
 

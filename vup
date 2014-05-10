@@ -2,7 +2,6 @@
 #-*- coding: utf-8 -*-
 
 from vm import Vm
-import sys
 import random
 import errno
 import socket
@@ -11,20 +10,22 @@ import os
 
 
 def is_available_port(port):
+    s = None
     try:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.bind(('127.0.0.1', port))
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.bind(('127.0.0.1', port))
 
         return True
     except OSError as e:
         if e.errno == errno.EADDRINUSE:
             return False
+    finally:
+        if s:
+            s.close()
 
+def up(vm, gui=False):
 
-def up(name):
-    vm = Vm(name)
-
-    if is_available_port(vm.ssh_port):
+    if vm.ssh_port and is_available_port(vm.ssh_port):
         pass
     else:
         host_port = random.randrange(49153, 65536)
@@ -33,7 +34,7 @@ def up(name):
         vm.set_ssh_port(host_port)
 
     vm.up()
-    sys.stdout.write('%s is starting.\n' % name)
+
 
 if __name__ == '__main__':
 
@@ -46,4 +47,5 @@ if __name__ == '__main__':
     if not vms:
         os.execlp(__file__, __file__, '--help')
 
-    [Vm(vm).up(options.gui) for vm in vms]
+    
+    [up(Vm(vm), options.gui) for vm in vms]

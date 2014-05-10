@@ -4,12 +4,12 @@ VBoxTools is command line tools compatible with Vagrant.
 
 ## Requirements ##
 
-* Python 3.x
+* Python 2.7 or Python 3.x
 * Virtual Box
 
 ## Tested ##
 
-* Mac OX 10.9 with Python 3.3.5
+* Mac OX 10.9
 
 ## Commands ##
 
