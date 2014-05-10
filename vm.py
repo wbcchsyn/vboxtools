@@ -25,14 +25,12 @@ class Vm(object):
         if cls.__vms is not None:
             return cls.__vms
 
-        cls.__vms = []
         pattern = re.compile(r'^\"(?P<name>\S+)"\s+'
                              r'\{(?P<hash>[0-9a-fA-F\-]+)\}$')
 
-        for line in cls.__call(VBoxManage, 'list', 'vms'):
-            m = pattern.match(line)
-            if m:
-                cls.__vms.append(m.groupdict()['name'])
+        matches = [pattern.match(line)
+                   for line in cls.__call(VBoxManage, 'list', 'vms')]
+        cls.__vms = [m.groupdict()['name'] for m in matches if m]
 
         return cls.__vms
 
@@ -214,6 +212,5 @@ class Vm(object):
             child = Popen(cmd_list, stdout=PIPE)
             return [line.decode('utf-8') for line in child.stdout.readlines()]
         finally:
-            if child:
-                if not child.wait() == 0:
-                    raise RuntimeError('Failed cmd %s' % cmd_list)
+            if child and (not child.wait() == 0):
+                raise RuntimeError('Failed cmd %s' % cmd_list)
