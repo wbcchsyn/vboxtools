@@ -212,11 +212,7 @@ class Vm(object):
         child = None
         try:
             child = Popen(cmd_list, stdout=PIPE)
-
-            ret = []
-            for line in child.stdout.readlines():
-                ret.append(''.join([chr(b) for b in iter(line)]))
-            return ret
+            return [line.decode('utf-8') for line in child.stdout.readlines()]
         finally:
             if child:
                 if not child.wait() == 0:
