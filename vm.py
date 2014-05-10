@@ -189,6 +189,16 @@ class Vm(object):
     def poweroff(self):
         self.__call(VBoxManage, 'controlvm', self.name, 'poweroff')
 
+    def clone(self, new_name, snapshot=None, full=False):
+        cmd = [VBoxManage, 'clonevm', self.name, '--register',
+               '--name', new_name]
+        if not full:
+            cmd = cmd + ['--options', 'link']
+        if snapshot:
+            cmd = cmd + ['--snapshot', snapshot]
+
+        self.__call(*cmd)
+
     def snap_list(self):
         pattern = re.compile(r'^(?P<indent> +)Name: (?P<name>.*) '
                              r'\(UUID: (?P<uuid>[a-f0-9\-]+)\)'

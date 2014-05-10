@@ -1,0 +1,41 @@
+#!/usr/bin/env python
+#-*- coding: utf-8 -*-
+
+from vm import Vm
+from optparse import OptionParser
+import os
+import re
+import sys
+
+if __name__ == '__main__':
+
+    parser = OptionParser('%s [Options] orgin[:snapshot] destination\n\n'
+                          'If snapshot is not specified,'
+                          ' use the current one.' % __file__)
+    parser.add_option('-f', '--full', dest='full', action='store_true',
+                      default=False,
+                      help='Do not use link but do copy all VM image.')
+    (options, args) = parser.parse_args()
+
+    if not len(args) == 2:
+        os.execlp(__file__, __file__, '--help')
+
+    origin, dest = args
+    m = re.match(r'^(?P<vm>.+)\:(?P<snap>.+)$', origin)
+    if m:
+        src = Vm(m.groupgict()['vm'])
+        snap = m.groupdict()['snap']
+    else:
+        src = Vm(origin)
+        try:
+            snap = [s for s in src.snap_list() if s['is_current']][0]['name']
+        except IndexError:
+            snap = None
+
+    if (not options.full) and (snap is None):
+        sys.stderr.write('VM "%s" has no snapshot.\n'
+                         'At least one snapshot is required'
+                         ' to create linked clnoe\n\n\n' % origin)
+        os.execlp(__file__, __file__, '--help')
+
+    src.clone(dest, snap, options.full)
