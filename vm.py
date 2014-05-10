@@ -185,6 +185,9 @@ class Vm(object):
     def snap_take(self, name):
         self.__call(VBoxManage, 'snapshot', self.name, 'take', name)
 
+    def snap_remove(self, name):
+        self.__call(VBoxManage, 'snapshot', self.name, 'delete', name)
+
     @staticmethod
     def __call(*cmd_list):
         """
