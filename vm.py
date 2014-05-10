@@ -202,11 +202,11 @@ class Vm(object):
 
         self.__info = None
 
-    def up(self, headless=True):
-        if headless:
-            self.__call(VBoxManage, 'startvm', self.name, '--type', 'headless')
-        else:
+    def up(self, gui=False):
+        if gui:
             self.__call(VBoxManage, 'startvm', self.name, '--type', 'gui')
+        else:
+            self.__call(VBoxManage, 'startvm', self.name, '--type', 'headless')
 
     def acpi(self):
         self.__call(VBoxManage, 'controlvm', self.name, 'acpipowerbutton')

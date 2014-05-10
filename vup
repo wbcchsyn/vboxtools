@@ -9,6 +9,7 @@ import socket
 from optparse import OptionParser
 import os
 
+
 def is_available_port(port):
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
@@ -36,5 +37,13 @@ def up(name):
 
 if __name__ == '__main__':
 
-    for vm in sys.argv[1:]:
-        up(vm)
+    parser = OptionParser('%s [-g] VM1 [VM2 ...]' % __file__)
+    parser.add_option('-g', '--gui', dest='gui', action='store_true',
+                      default=False,
+                      help='Make GUI available.')
+    options, vms = parser.parse_args()
+
+    if not vms:
+        os.execlp(__file__, __file__, '--help')
+
+    [Vm(vm).up(options.gui) for vm in vms]
