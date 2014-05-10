@@ -6,7 +6,8 @@ import sys
 import random
 import errno
 import socket
-
+from optparse import OptionParser
+import os
 
 def is_available_port(port):
     try:
@@ -22,20 +23,13 @@ def is_available_port(port):
 def up(name):
     vm = Vm(name)
 
-    try:
-        rule = [rule for rule in vm.port_forward if rule['name'] == 'ssh'][0]
-
-        host_port = int(rule['host port'])
+    if is_available_port(vm.ssh_port):
+        pass
+    else:
+        host_port = random.randrange(49153, 65536)
         while not is_available_port(host_port):
             host_port = random.randrange(49153, 65536)
-
-        if not rule['host port'] == host_port:
-            vm.del_port_forward(rule)
-            rule['host port'] = host_port
-            vm.set_port_forward(rule)
-
-    except IndexError:
-        pass
+        vm.set_ssh_port(host_port)
 
     vm.up()
     sys.stdout.write('%s is starting.\n' % name)

@@ -140,21 +140,6 @@ class Vm(object):
         return ret
 
     @property
-    def ssh_port(self):
-        """ Return host port of ssh port forwarding. """
-
-        ssh_rules = [rule for rule in self.port_forward
-                     if rule['name'] == 'ssh' and rule['guest port'] == '22']
-
-        if len(ssh_rules) == 0:
-            return None
-        elif len(ssh_rules) == 1:
-            return int(ssh_rules[0]['host port'])
-        else:
-            raise RuntimeError('%s has 2 or more than 2 ssh port forward.' %
-                               self.name)
-
-    @property
     def port_forward(self):
         """
         Fetch Port forward settings of the Nat and return the information.
@@ -181,35 +166,41 @@ class Vm(object):
 
         return ret
 
-    def del_port_forward(self, rule):
-        try:
-            if not self.nics[rule['nic']]['Attachment'] == "NAT":
-                raise RuntimeError("NIC %d is not NAT." % rule['nic'])
+    def __ssh_port_forward_rule(self):
+        """ Return port forward rule for ssh. """
 
+        ssh_rules = [rule for rule in self.port_forward
+                     if rule['name'] == 'ssh' and rule['guest port'] == '22']
+
+        if len(ssh_rules) == 0:
+            return None
+        elif len(ssh_rules) == 1:
+            return ssh_rules[0]
+        else:
+            raise RuntimeError('%s has 2 or more than 2 ssh port forward.' %
+                               self.name)
+
+    @property
+    def ssh_port(self):
+        if self.is_running:
+            return int(self.__ssh_port_forward_rule()['host port'])
+        else:
+            return None
+
+    def set_ssh_port(self, port):
+        rule = self.__ssh_port_forward_rule()
+        if rule:
             self.__call(VBoxManage, 'modifyvm', self.name,
                         '--natpf%s' % rule['nic'], 'delete', rule['name'])
-        except KeyError as e:
-            raise ArgumentError('Argument rule is requested to be dict and has'
-                                ' %s key.' %
-                                e.args[0])
 
-    def set_port_forward(self, rule):
+        nic = [num for num, info in self.nics.items()
+               if info['Attachment'] == 'NAT'][0]
 
-        try:
-            if not self.nics[rule['nic']]['Attachment'] == "NAT":
-                raise RuntimeError("NIC %d is not NAT." % rule['nic'])
+        self.__call(VBoxManage, 'modifyvm', self.name,
+                    '--natpf%d' % nic,
+                    'ssh,tcp,127.0.0.1,%d,,22' % port)
 
-            self.__call(VBoxManage, 'modifyvm', self.name,
-                        '--natpf%d' % rule['nic'],
-                        '%s,%s,%s,%s,%s,%s' % (rule['name'],
-                                               rule['protocol'],
-                                               rule['host ip'],
-                                               rule['host port'],
-                                               rule['guest ip'],
-                                               rule['guest port']))
-        except KeyError as e:
-            raise ArgumentError('Argument rule is requested to be dict and has'
-                                ' key %s.' % e.args[0])
+        self.__info = None
 
     def up(self, headless=True):
         if headless:
