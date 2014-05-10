@@ -182,6 +182,9 @@ class Vm(object):
     def poweroff(self):
         self.__call(VBoxManage, 'controlvm', self.name, 'poweroff')
 
+    def snap_take(self, name):
+        self.__call(VBoxManage, 'snapshot', self.name, 'take', name)
+
     @staticmethod
     def __call(*cmd_list):
         """
