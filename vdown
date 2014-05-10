@@ -16,4 +16,3 @@ if __name__ == '__main__':
             Vm(vm).poweroff()
         else:
             Vm(vm).acpi()
-
