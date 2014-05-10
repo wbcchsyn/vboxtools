@@ -130,10 +130,12 @@ class Vm(object):
                     continue
 
                 num = int(m.groupdict()['number'])
-                ret[num] = {}
+                nic = {}
                 for cell in m.groupdict()['csv'].split(','):
                     k, v = [s.strip() for s in cell.split(':', 1)]
-                    ret[num][k] = v
+                    nic[k] = v
+                if nic['Cable connected'] == 'on':
+                    ret[num] = nic
 
         return ret
 
