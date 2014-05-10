@@ -9,10 +9,10 @@ if __name__ == '__main__':
     parser = OptionParser('%s [options] [name1 [name2 ...]]' % __file__)
     parser.add_option('-l', '--long', dest='long', action='store_true',
                       default=False,
-                      help='Show long format.')
+                      help='List in long format.')
     parser.add_option('-r', '--running', dest='run', action='store_true',
                       default=False,
-                      help='Show only running VMs.')
+                      help='List in only running VMs.')
     (options, args) = parser.parse_args()
 
     if args:

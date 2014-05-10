@@ -7,6 +7,7 @@ import os
 import re
 import sys
 
+
 if __name__ == '__main__':
 
     parser = OptionParser('%s [Options] orgin[:snapshot] destination\n\n'
@@ -14,7 +15,7 @@ if __name__ == '__main__':
                           ' use the current one.' % __file__)
     parser.add_option('-f', '--full', dest='full', action='store_true',
                       default=False,
-                      help='Do not use link but do copy all VM image.')
+                      help='Do not use link clone but do copy all VM image.')
     (options, args) = parser.parse_args()
 
     if not len(args) == 2:

@@ -5,9 +5,10 @@ from vm import Vm
 from optparse import OptionParser
 import os
 
+
 if __name__ == '__main__':
 
-    parser = OptionParser('%s VM_name snapshot_name.' % __file__)
+    parser = OptionParser('%s VM snapshot' % __file__)
     (options, args) = parser.parse_args()
 
     if not len(args) == 2:

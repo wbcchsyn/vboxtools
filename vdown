@@ -8,7 +8,8 @@ if __name__ == '__main__':
 
     parser = OptionParser('%s [Options] vm1 [vm2 [vm3 ...]]' % __file__)
     parser.add_option('-f', '--force', dest='force', action='store_true',
-                      default=False, help='Not acpi but force powerdown.')
+                      default=False, help='Not send acpi signal but force'
+                      ' poweroff.')
     (options, vms) = parser.parse_args()
 
     for vm in vms:
