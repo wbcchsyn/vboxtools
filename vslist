@@ -1,0 +1,27 @@
+#!/usr/bin/env python
+#-*- coding: utf-8 -*-
+
+from vm import Vm
+from optparse import OptionParser
+import os
+
+if __name__ == '__main__':
+
+    parser = OptionParser('%s VM_name' % __file__)
+    parser.add_option('-l', '--long', dest='long', action='store_true',
+                      default=False,
+                      help='Show UUID and tree structure as well as snapshot'
+                      ' name.')
+    (options, args) = parser.parse_args()
+
+    if not len(args) == 1:
+        os.execlp(__file__, __file__, '--help')
+
+    name = args[0]
+    for snap in Vm(name).snap_list():
+        current = '*' if snap['is_current'] else ' '
+        if options.long:
+            print('%s%s%s (%s)' %
+                  (current, ' ' * snap['indent'], snap['name'], snap['uuid'],))
+        else:
+            print('%s %s' % (current, snap['name'],))

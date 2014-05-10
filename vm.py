@@ -189,6 +189,19 @@ class Vm(object):
     def poweroff(self):
         self.__call(VBoxManage, 'controlvm', self.name, 'poweroff')
 
+    def snap_list(self):
+        pattern = re.compile(r'^(?P<indent> +)Name: (?P<name>.*) '
+                             r'\(UUID: (?P<uuid>[a-f0-9\-]+)\)'
+                             r'(?P<current> \*)?$')
+        matches = [pattern.match(line) for line in self.info]
+        return [
+            {'indent': int(len(m.groupdict()['indent']) / 3),
+             'name': m.groupdict()['name'],
+             'uuid': m.groupdict()['uuid'],
+             'is_current': m.groupdict()['current'] is not None}
+            for m in matches if m
+        ]
+
     def snap_take(self, name):
         self.__call(VBoxManage, 'snapshot', self.name, 'take', name)
 
