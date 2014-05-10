@@ -1,0 +1,24 @@
+#!/usr/bin/env python
+#-*- coding: utf-8 -*-
+
+from vm import Vm
+from optparse import OptionParser
+import os
+import time
+
+if __name__ == '__main__':
+
+    parser = OptionParser('%s VM1 [VM2 [VM3 ...]]' % __file__)
+    (options, vms) = parser.parse_args()
+
+    if not vms:
+        os.execlp(__file__, __file__, '--help')
+
+    for vm in vms:
+        _vm = Vm(vm)
+
+        if _vm.is_running:
+            Vm(vm).poweroff()
+            time.sleep(0.1)  # Wait for unlock
+
+        Vm(vm).unregister()

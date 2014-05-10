@@ -84,6 +84,12 @@ class Vm(object):
         raise RuntimeError('Failed to parse vm info.')
 
     @property
+    def is_running(self):
+        """ Return True if VM is running. """
+
+        return self.status.startswith('running')
+
+    @property
     def status(self):
         """ Return VM status. """
 
@@ -178,6 +184,9 @@ class Vm(object):
 
     def acpi(self):
         self.__call(VBoxManage, 'controlvm', self.name, 'acpipowerbutton')
+
+    def unregister(self):
+        self.__call(VBoxManage, 'unregistervm', self.name, '--delete')
 
     def poweroff(self):
         self.__call(VBoxManage, 'controlvm', self.name, 'poweroff')
