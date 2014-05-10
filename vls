@@ -2,37 +2,57 @@
 #-*- coding: utf-8 -*-
 
 from vm import Vm
-
+from optparse import OptionParser
+import os
 
 if __name__ == '__main__':
 
-    vms = [Vm(name) for name in Vm.list_vms()]
+    parser = OptionParser('%s [options] [name1 [name2 ...]]' % __file__)
+    parser.add_option('-l', '--long', dest='long', action='store_true',
+                      default=False,
+                      help='Show long format.')
+    parser.add_option('-r', '--running', dest='run', action='store_true',
+                      default=False,
+                      help='Show only running VMs.')
+    (options, args) = parser.parse_args()
+
+    if args:
+        vms = [Vm(name) for name in args]
+    else:
+        vms = [Vm(name) for name in Vm.list_vms()]
+
+    if options.run:
+        vms = [vm for vm in vms if vm.is_running]
 
     statuses = ['run'] + ['*' if vm.is_running else '' for vm in vms]
     names = ['Name'] + [vm.name for vm in vms]
     cores = ['CPU'] + [str(vm.core) for vm in vms]
     memories = ['Mem'] + [vm.memory for vm in vms]
+    oses = ['OS'] + [vm.os for vm in vms]
+    uuids = ['UUID'] + [vm.uuid for vm in vms]
+    ssh_ports = ['SSH Host Port'] + [str(vm.ssh_port) if vm.is_running else ''
+                                     for vm in vms]
 
-    ssh_ports = ['SSH Host Port']
-    for vm in vms:
-        port = [rule['host port'] for rule in vm.port_forward
-                if rule['name'] == 'ssh']
-        try:
-            if vm.is_running:
-                ssh_ports.append(port[0])
-            else:
-                ssh_ports.append('')
-        except IndexError:
-            ssh_ports.append('')
+    if options.long:
+        format = '%%-%ds %%-%ds %%-%ds %%-%ds %%-%ds %%-%ds %%-%ds' % (
+            max(map(len, statuses)),
+            max(map(len, names)),
+            max(map(len, oses)),
+            max(map(len, cores)),
+            max(map(len, memories)),
+            max(map(len, uuids)),
+            max(map(len, ssh_ports)),
+        )
 
-    format = '%%-%ds %%-%ds %%-%ds %%-%ds %%-%ds' % (
-        max(map(len, statuses)),
-        max(map(len, names)),
-        max(map(len, cores)),
-        max(map(len, memories)),
-        max(map(len, ssh_ports)),
-    )
+        for status, name, os, core, memory, uuid, port, in zip(
+                statuses, names, oses, cores, memories, uuids, ssh_ports,):
+            print(format % (status, name, os, core, memory, uuid, port,))
 
-    for status, name, core, memory, port in zip(
-            statuses, names, cores, memories, ssh_ports):
-        print(format % (status, name, core, memory, port))
+    else:
+        format = '%%-%ds %%-%ds' % (
+            max(map(len, names)),
+            max(map(len, ssh_ports)),
+        )
+
+        for name, port in zip(names, ssh_ports,):
+            print(format % (name, port,))

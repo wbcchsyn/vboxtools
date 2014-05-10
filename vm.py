@@ -97,6 +97,26 @@ class Vm(object):
         raise RuntimeError("Failed to fetch status.")
 
     @property
+    def os(self):
+        """ Return Guest OS. """
+
+        for line in self.info:
+            if line.startswith('Guest OS:'):
+                return line.split(':', 1)[1].strip()
+
+        raise RuntimeError("Failed to parse Guest OS.")
+
+    @property
+    def uuid(self):
+        """ Return VM UUID. """
+
+        for line in self.info:
+            if line.startswith('UUID:'):
+                return line.split(':', 1)[1].strip()
+
+        raise RuntimeError("Failed to parse UUID.")
+
+    @property
     def nics(self):
         """ Return VM Nics information. """
 
@@ -116,6 +136,21 @@ class Vm(object):
                     ret[num][k] = v
 
         return ret
+
+    @property
+    def ssh_port(self):
+        """ Return host port of ssh port forwarding. """
+
+        ssh_rules = [rule for rule in self.port_forward
+                     if rule['name'] == 'ssh' and rule['guest port'] == '22']
+
+        if len(ssh_rules) == 0:
+            return None
+        elif len(ssh_rules) == 1:
+            return int(ssh_rules[0]['host port'])
+        else:
+            raise RuntimeError('%s has 2 or more than 2 ssh port forward.' %
+                               self.name)
 
     @property
     def port_forward(self):
