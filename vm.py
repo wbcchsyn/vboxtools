@@ -10,6 +10,7 @@ VBoxManage = "VBoxManage"
 
 
 class Vm(object):
+
     __vms = None
 
     @classmethod
@@ -174,6 +175,12 @@ class Vm(object):
             self.__call(VBoxManage, 'startvm', self.name, '--type', 'headless')
         else:
             self.__call(VBoxManage, 'startvm', self.name, '--type', 'gui')
+
+    def acpi(self):
+        self.__call(VBoxManage, 'controlvm', self.name, 'acpipowerbutton')
+
+    def poweroff(self):
+        self.__call(VBoxManage, 'controlvm', self.name, 'poweroff')
 
     @staticmethod
     def __call(*cmd_list):

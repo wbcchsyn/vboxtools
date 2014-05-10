@@ -1,0 +1,19 @@
+#!/usr/bin/env python
+#-*- coding: utf-8 -*-
+
+from vm import Vm
+from optparse import OptionParser
+
+if __name__ == '__main__':
+
+    parser = OptionParser('%s [Options] vm1 [vm2 [vm3 ...]]' % __file__)
+    parser.add_option('-f', '--force', dest='force', action='store_true',
+                      default=False, help='Not acpi but force powerdown.')
+    (options, vms) = parser.parse_args()
+
+    for vm in vms:
+        if options.force:
+            Vm(vm).poweroff()
+        else:
+            Vm(vm).acpi()
+
