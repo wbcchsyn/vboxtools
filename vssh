@@ -1,0 +1,47 @@
+#!/usr/bin/env python
+#-*- coding: utf-8 -*-
+
+from vm import Vm
+from optparse import OptionParser
+import os
+import re
+import sys
+
+def help():
+    usage = 'Usage: %s [user_name@]vm_name [ssh options] [command]\n' % __file__
+    sys.stderr.write(usage)
+    sys.exit(1)
+
+if __name__ == '__main__':
+
+    if len(sys.argv) < 2:
+        help()
+
+    dest = sys.argv[1]
+    m = re.match('^(?P<user>.+)@(?P<vm>.+)$', dest)
+    if m:
+        user = m.groupdict()['user']
+        vm = Vm(m.groupdict()['vm'])
+    else:
+        user = None
+        vm = Vm(dest)
+
+    try:
+        port = [pf['host port'] for pf in vm.port_forward
+                if pf['name'] == 'ssh'][0]
+    except IndexError:
+        sys.stderr.write('%s has no port forward settings named "ssh".' %
+                         vm.name)
+
+    cmd = 'ssh'
+    args = ['ssh', '-p', port]
+
+    if user:
+        args.append('%s@127.0.0.1' % user)
+    else:
+        args.append('localhost')
+
+    if len(sys.argv) > 2:
+        args = args + sys.argv[2:]
+
+    os.execvp(cmd, args)
