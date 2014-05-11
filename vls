@@ -4,6 +4,7 @@
 from vm import Vm
 from optparse import OptionParser
 
+
 if __name__ == '__main__':
 
     parser = OptionParser('%s [options] [name1 [name2 ...]]' % __file__)
@@ -12,13 +13,13 @@ if __name__ == '__main__':
                       help='List in long format.')
     parser.add_option('-r', '--running', dest='run', action='store_true',
                       default=False,
-                      help='List in only running VMs.')
-    (options, args) = parser.parse_args()
+                      help='List only running VMs.')
+    (options, args,) = parser.parse_args()
 
     if args:
-        vms = [Vm(name) for name in args]
+        vms = [Vm(key) for key in args]
     else:
-        vms = [Vm(name) for name in Vm.list_vms()]
+        vms = [Vm(uuid) for uuid in Vm.list_vms()]
 
     if options.run:
         vms = [vm for vm in vms if vm.is_running]

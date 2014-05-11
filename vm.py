@@ -26,20 +26,45 @@ class Vm(object):
             return cls.__vms
 
         pattern = re.compile(r'^\"(?P<name>\S+)"\s+'
-                             r'\{(?P<hash>[0-9a-fA-F\-]+)\}$')
+                             r'\{(?P<uuid>[0-9a-fA-F\-]+)\}$')
 
-        matches = [pattern.match(line)
-                   for line in cls.__call(VBoxManage, 'list', 'vms')]
-        cls.__vms = [m.groupdict()['name'] for m in matches if m]
+        cls.__vms = {}
+        for line in cls.__call(VBoxManage, 'list', 'vms'):
+            m = pattern.match(line)
+            if m:
+                cls.__vms[m.groupdict()['uuid']] = m.groupdict()['name']
 
         return cls.__vms
 
-    def __init__(self, name):
-        """ Argument 'name' is the VM name. """
-        if name not in self.list_vms():
-            raise RuntimeError('No such vm is.')
+    def __init__(self, key):
+        """ Argument 'key' is VM name or its UUID."""
 
-        self.__name = name
+        self.__uuid = None
+        self.__name = None
+
+        if key in self.list_vms():
+            # Search key in UUID list.
+            self.__uuid = key
+            self.__name = self.list_vms()[key]
+
+        else:
+            # Search key in Name list.
+            vms = [(uuid, name,)
+                   for uuid, name in self.list_vms().items()
+                   if name == key]
+
+            if len(vms) == 1:
+                self.__uuid = vms[0][0]
+                self.__name = vms[0][1]
+
+            elif len(vms) > 1:
+                raise RuntimeError('There is 2 or more than 2 vms named %s.'
+                                   ' Please use UUID instead of name.'
+                                   ' UUID can be find by vls -l command.'% key)
+
+        if not (self.__uuid and self.__name):
+            raise RuntimeError('%s: No such VM is.' % key)
+
         self.__info = None
 
     @property
@@ -49,11 +74,17 @@ class Vm(object):
         return self.__name
 
     @property
+    def uuid(self):
+        """ Return VM UUID. """
+
+        return self.__uuid
+
+    @property
     def info(self):
         """ Fetch VM infomation from VirtualBox. """
 
         if self.__info is None:
-            self.__info = self.__call(VBoxManage, 'showvminfo', self.__name)
+            self.__info = self.__call(VBoxManage, 'showvminfo', self.uuid)
 
         return self.__info
 
@@ -105,16 +136,6 @@ class Vm(object):
                 return line.split(':', 1)[1].strip()
 
         raise RuntimeError("Failed to parse Guest OS.")
-
-    @property
-    def uuid(self):
-        """ Return VM UUID. """
-
-        for line in self.info:
-            if line.startswith('UUID:'):
-                return line.split(':', 1)[1].strip()
-
-        raise RuntimeError("Failed to parse UUID.")
 
     @property
     def nics(self):
@@ -178,7 +199,7 @@ class Vm(object):
             return ssh_rules[0]
         else:
             raise RuntimeError('%s has 2 or more than 2 ssh port forward.' %
-                               self.name)
+                               self.uuid)
 
     @property
     def ssh_port(self):
@@ -195,13 +216,13 @@ class Vm(object):
 
         rule = self.__ssh_port_forward_rule()
         if rule:
-            self.__call(VBoxManage, 'modifyvm', self.name,
+            self.__call(VBoxManage, 'modifyvm', self.uuid,
                         '--natpf%s' % rule['nic'], 'delete', rule['name'])
 
         nic = [num for num, info in self.nics.items()
                if info['Attachment'] == 'NAT'][0]
 
-        self.__call(VBoxManage, 'modifyvm', self.name,
+        self.__call(VBoxManage, 'modifyvm', self.uuid,
                     '--natpf%d' % nic,
                     'ssh,tcp,127.0.0.1,%d,,22' % port)
 
@@ -211,24 +232,24 @@ class Vm(object):
         """ Start VM """
 
         if gui:
-            self.__call(VBoxManage, 'startvm', self.name, '--type', 'gui')
+            self.__call(VBoxManage, 'startvm', self.uuid, '--type', 'gui')
         else:
-            self.__call(VBoxManage, 'startvm', self.name, '--type', 'headless')
+            self.__call(VBoxManage, 'startvm', self.uuid, '--type', 'headless')
 
     def acpi(self):
         """ Send ACPI signal. """
 
-        self.__call(VBoxManage, 'controlvm', self.name, 'acpipowerbutton')
+        self.__call(VBoxManage, 'controlvm', self.uuid, 'acpipowerbutton')
 
     def unregister(self):
         """ Unregister VM and delete all files. """
 
-        self.__call(VBoxManage, 'unregistervm', self.name, '--delete')
+        self.__call(VBoxManage, 'unregistervm', self.uuid, '--delete')
 
     def poweroff(self):
         """ Poweroff VM forcely. """
 
-        self.__call(VBoxManage, 'controlvm', self.name, 'poweroff')
+        self.__call(VBoxManage, 'controlvm', self.uuid, 'poweroff')
 
     def clone(self, new_name, snapshot=None, full=False):
         """ Create a clone VM.
@@ -241,7 +262,7 @@ class Vm(object):
         clone.
         """
 
-        cmd = [VBoxManage, 'clonevm', self.name, '--register',
+        cmd = [VBoxManage, 'clonevm', self.uuid, '--register',
                '--name', new_name]
         if not full:
             cmd = cmd + ['--options', 'link']
@@ -268,12 +289,12 @@ class Vm(object):
     def snap_take(self, name):
         """ Create a new snapshot. """
 
-        self.__call(VBoxManage, 'snapshot', self.name, 'take', name)
+        self.__call(VBoxManage, 'snapshot', self.uuid, 'take', name)
 
     def snap_remove(self, name):
         """ Remove specified snapshot. """
 
-        self.__call(VBoxManage, 'snapshot', self.name, 'delete', name)
+        self.__call(VBoxManage, 'snapshot', self.uuid, 'delete', name)
 
     def snap_restore(self, name=None):
         """ Restore to snapshot.
@@ -282,9 +303,9 @@ class Vm(object):
         """
 
         if name is None:
-            self.__call(VBoxManage, 'snapshot', self.name, 'restorecurrent')
+            self.__call(VBoxManage, 'snapshot', self.uuid, 'restorecurrent')
         else:
-            self.__call(VBoxManage, 'snapshot', self.name, 'restore', name)
+            self.__call(VBoxManage, 'snapshot', self.uuid, 'restore', name)
 
     @staticmethod
     def __call(*cmd_list):

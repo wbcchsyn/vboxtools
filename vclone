@@ -29,7 +29,7 @@ if __name__ == '__main__':
     else:
         src = Vm(origin)
         try:
-            snap = [s for s in src.snap_list() if s['is_current']][0]['name']
+            snap = [s for s in src.snap_list() if s['is_current']][0]['uuid']
         except IndexError:
             snap = None
 
