@@ -43,7 +43,7 @@ class Vm(object):
                              r'\{(?P<uuid>[0-9a-fA-F\-]+)\}$')
 
         cls.__vms = {}
-        for line in _call(VBoxManage, 'list', 'vms'):
+        for line in cls.__call(VBoxManage, 'list', 'vms'):
             m = pattern.match(line)
             if m:
                 cls.__vms[m.groupdict()['uuid']] = m.groupdict()['name']
@@ -72,8 +72,9 @@ class Vm(object):
                 self.__name = vms[0][1]
 
             elif len(vms) > 1:
-                raise RuntimeError('There is 2 or more than 2 vms named %s.' %
-                                   key)
+                raise RuntimeError('There is 2 or more than 2 vms named %s.'
+                                   ' Please use UUID instead of name.'
+                                   ' UUID can be find by vls -l command.'% key)
 
         if not (self.__uuid and self.__name):
             raise RuntimeError('%s: No such VM is.' % key)
@@ -97,7 +98,7 @@ class Vm(object):
         """ Fetch VM infomation from VirtualBox. """
 
         if self.__info is None:
-            self.__info = _call(VBoxManage, 'showvminfo', self.uuid)
+            self.__info = self.__call(VBoxManage, 'showvminfo', self.uuid)
 
         return self.__info
 
@@ -229,15 +230,15 @@ class Vm(object):
 
         rule = self.__ssh_port_forward_rule()
         if rule:
-            _call(VBoxManage, 'modifyvm', self.uuid,
-                  '--natpf%s' % rule['nic'], 'delete', rule['name'])
+            self.__call(VBoxManage, 'modifyvm', self.uuid,
+                        '--natpf%s' % rule['nic'], 'delete', rule['name'])
 
         nic = [num for num, info in self.nics.items()
                if info['Attachment'] == 'NAT'][0]
 
-        _call(VBoxManage, 'modifyvm', self.uuid,
-              '--natpf%d' % nic,
-              'ssh,tcp,127.0.0.1,%d,,22' % port)
+        self.__call(VBoxManage, 'modifyvm', self.uuid,
+                    '--natpf%d' % nic,
+                    'ssh,tcp,127.0.0.1,%d,,22' % port)
 
         self.__info = None
 
@@ -245,24 +246,24 @@ class Vm(object):
         """ Start VM """
 
         if gui:
-            _call(VBoxManage, 'startvm', self.uuid, '--type', 'gui')
+            self.__call(VBoxManage, 'startvm', self.uuid, '--type', 'gui')
         else:
-            _call(VBoxManage, 'startvm', self.uuid, '--type', 'headless')
+            self.__call(VBoxManage, 'startvm', self.uuid, '--type', 'headless')
 
     def acpi(self):
         """ Send ACPI signal. """
 
-        _call(VBoxManage, 'controlvm', self.uuid, 'acpipowerbutton')
+        self.__call(VBoxManage, 'controlvm', self.uuid, 'acpipowerbutton')
 
     def unregister(self):
         """ Unregister VM and delete all files. """
 
-        _call(VBoxManage, 'unregistervm', self.uuid, '--delete')
+        self.__call(VBoxManage, 'unregistervm', self.uuid, '--delete')
 
     def poweroff(self):
         """ Poweroff VM forcely. """
 
-        _call(VBoxManage, 'controlvm', self.uuid, 'poweroff')
+        self.__call(VBoxManage, 'controlvm', self.uuid, 'poweroff')
 
     def clone(self, new_name, snapshot=None, full=False):
         """ Create a clone VM.
@@ -302,12 +303,12 @@ class Vm(object):
     def snap_take(self, name):
         """ Create a new snapshot. """
 
-        _call(VBoxManage, 'snapshot', self.uuid, 'take', name)
+        self.__call(VBoxManage, 'snapshot', self.uuid, 'take', name)
 
     def snap_remove(self, name):
         """ Remove specified snapshot. """
 
-        _call(VBoxManage, 'snapshot', self.uuid, 'delete', name)
+        self.__call(VBoxManage, 'snapshot', self.uuid, 'delete', name)
 
     def snap_restore(self, name=None):
         """ Restore to snapshot.
@@ -316,6 +317,20 @@ class Vm(object):
         """
 
         if name is None:
-            _call(VBoxManage, 'snapshot', self.uuid, 'restorecurrent')
+            self.__call(VBoxManage, 'snapshot', self.uuid, 'restorecurrent')
         else:
-            _call(VBoxManage, 'snapshot', self.uuid, 'restore', name)
+            self.__call(VBoxManage, 'snapshot', self.uuid, 'restore', name)
+
+    @staticmethod
+    def __call(*cmd_list):
+        """
+        Execute shell command and return list of the stdout.
+        """
+
+        child = None
+        try:
+            child = Popen(cmd_list, stdout=PIPE)
+            return [line.decode('utf-8') for line in child.stdout.readlines()]
+        finally:
+            if child and (not child.wait() == 0):
+                raise RuntimeError('Failed cmd %s' % cmd_list)
