@@ -16,7 +16,7 @@ def is_available_port(port):
         s.bind(('127.0.0.1', port))
 
         return True
-    except OSError as e:
+    except (socket.error, OSError,) as e:
         if e.errno == errno.EADDRINUSE:
             return False
     finally:
@@ -33,7 +33,7 @@ def up(vm, gui=False):
             host_port = random.randrange(49153, 65536)
         vm.set_ssh_port(host_port)
 
-    vm.up()
+    vm.up(gui)
 
 
 if __name__ == '__main__':
@@ -41,7 +41,7 @@ if __name__ == '__main__':
     parser = OptionParser('%s [-g] VM1 [VM2 ...]' % __file__)
     parser.add_option('-g', '--gui', dest='gui', action='store_true',
                       default=False,
-                      help='Make GUI available.')
+                      help='Enable GUI.')
     options, vms = parser.parse_args()
 
     if not vms:
