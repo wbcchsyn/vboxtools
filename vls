@@ -30,8 +30,7 @@ if __name__ == '__main__':
     memories = ['Mem'] + [vm.memory for vm in vms]
     oses = ['OS'] + [vm.os for vm in vms]
     uuids = ['UUID'] + [vm.uuid for vm in vms]
-    ssh_ports = ['SSH Host Port'] + [str(vm.ssh_port) if vm.is_running else ''
-                                     for vm in vms]
+    ssh_ports = ['SSH Host Port'] + [str(vm.ssh_port) for vm in vms]
 
     if options.long:
         format = '%%-%ds %%-%ds %%-%ds %%-%ds %%-%ds %%-%ds %%-%ds' % (
