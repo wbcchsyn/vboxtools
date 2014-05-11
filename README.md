@@ -101,3 +101,12 @@ Remove snapshot
 
 Usage:  
 vsremove VM snapshot
+
+
+### vssh ###
+ssh to guest.
+
+Usage:  
+vssh [user_name@]VM [ssh options] [command]
+
+All ssh options and command are passed to ssh command.
