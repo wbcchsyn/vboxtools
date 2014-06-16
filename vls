@@ -3,6 +3,7 @@
 
 from vm import Vm
 from optparse import OptionParser
+from operator import attrgetter
 
 
 if __name__ == '__main__':
@@ -14,6 +15,12 @@ if __name__ == '__main__':
     parser.add_option('-r', '--running', dest='run', action='store_true',
                       default=False,
                       help='List only running VMs.')
+    parser.add_option('-s', '--sort', dest='sort', action='append',
+                      default=[],
+                      help='key to sort by. User can specify many times.'
+                      "Value shoud be 'os' or 'core' or 'memory' or 'uuid' or"
+                      " 'ssh_port'")
+
     (options, args,) = parser.parse_args()
 
     if args:
@@ -24,9 +31,12 @@ if __name__ == '__main__':
     if options.run:
         vms = [vm for vm in vms if vm.is_running]
 
+    options.sort = options.sort + ['os', 'core', 'memory', 'uuid']
+    vms.sort(key=attrgetter(*options.sort))
+
     statuses = ['run'] + ['*' if vm.is_running else '' for vm in vms]
     names = ['Name'] + [vm.name for vm in vms]
-    cores = ['CPU'] + [str(vm.core) for vm in vms]
+    cores = ['Core'] + [str(vm.core) for vm in vms]
     memories = ['Mem'] + [vm.memory for vm in vms]
     oses = ['OS'] + [vm.os for vm in vms]
     uuids = ['UUID'] + [vm.uuid for vm in vms]
