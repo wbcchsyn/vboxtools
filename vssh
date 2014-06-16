@@ -2,7 +2,6 @@
 #-*- coding: utf-8 -*-
 
 from vm import Vm
-from optparse import OptionParser
 import os
 import re
 import sys

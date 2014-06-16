@@ -1,6 +1,5 @@
 #-*- coding: utf-8 -*-
 
-import sys
 import re
 from subprocess import Popen, PIPE
 
@@ -74,7 +73,8 @@ class Vm(object):
             elif len(vms) > 1:
                 raise RuntimeError('There is 2 or more than 2 vms named %s.'
                                    ' Please use UUID instead of name.'
-                                   ' UUID can be find by vls -l command.'% key)
+                                   ' UUID can be find by vls -l command.' %
+                                   key)
 
         if not (self.__uuid and self.__name):
             raise RuntimeError('%s: No such VM is.' % key)
