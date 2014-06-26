@@ -15,24 +15,24 @@ if __name__ == '__main__':
     parser.add_option('-r', '--running', dest='run', action='store_true',
                       default=False,
                       help='List only running VMs.')
-    parser.add_option('-s', '--sort', dest='sort', action='append',
+    parser.add_option('-s', '--sort', dest='key', action='append',
                       default=[],
                       help='key to sort by. User can specify many times.'
-                      "Value shoud be 'os' or 'core' or 'memory' or 'uuid' or"
+                      " Value shoud be 'os' or 'core' or 'memory' or 'uuid' or"
                       " 'ssh_port'")
 
     (options, args,) = parser.parse_args()
 
     if args:
-        vms = [Vm(key) for key in args]
+        vms = map(Vm, args)
     else:
-        vms = [Vm(uuid) for uuid in Vm.list_vms()]
+        vms = map(Vm, Vm.list_vms())
 
     if options.run:
-        vms = [vm for vm in vms if vm.is_running]
+        vms = filter(attrgetter('is_running'), vms)
 
-    options.sort = options.sort + ['os', 'core', 'memory', 'uuid']
-    vms.sort(key=attrgetter(*options.sort))
+    order_keys = options.key + ['os', 'name', 'uuid']
+    vms = sorted(vms, key=attrgetter(*order_keys))
 
     statuses = ['run'] + ['*' if vm.is_running else '' for vm in vms]
     names = ['Name'] + [vm.name for vm in vms]
