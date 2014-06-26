@@ -16,9 +16,12 @@ def is_available_port(port):
         s.bind(('127.0.0.1', port))
 
         return True
+
     except (socket.error, OSError,) as e:
         if e.errno == errno.EADDRINUSE:
             return False
+        else:
+            raise e
     finally:
         if s:
             s.close()
