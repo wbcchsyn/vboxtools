@@ -1,4 +1,4 @@
-#-*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 import re
 from subprocess import Popen, PIPE
@@ -232,14 +232,14 @@ class Vm(object):
         rule = self.__ssh_port_forward_rule()
         if rule:
             _call(VBoxManage, 'modifyvm', self.uuid,
-                        '--natpf%s' % rule['nic'], 'delete', rule['name'])
+                  '--natpf%s' % rule['nic'], 'delete', rule['name'])
 
         nic = [num for num, info in self.nics.items()
                if info['Attachment'] == 'NAT'][0]
 
         _call(VBoxManage, 'modifyvm', self.uuid,
-                    '--natpf%d' % nic,
-                    'ssh,tcp,127.0.0.1,%d,,22' % port)
+              '--natpf%d' % nic,
+              'ssh,tcp,127.0.0.1,%d,,22' % port)
 
         self.__info = None
 
