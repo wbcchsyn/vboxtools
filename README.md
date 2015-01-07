@@ -107,6 +107,6 @@ vsremove VM snapshot
 ssh to guest.
 
 Usage:  
-vssh [user_name@]VM [ssh options] [command]
+vssh [ssh options] [user_name@]VM -- [command]
 
 All ssh options and command are passed to ssh command.

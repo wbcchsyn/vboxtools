@@ -8,9 +8,31 @@ import sys
 
 
 def help():
-    sys.stderr.write('Usage: %s [user_name@]vm_name [ssh options]'
-                     ' [command]\n' % __file__)
+    sys.stderr.write('Usage: %s [ssh options] [user_name@]vm_name '
+                     ' [-- commands]\n' % __file__)
     sys.exit(1)
+
+
+def parse_host(hostname):
+    m = re.match('^(?P<user>.+)@(?P<vm>.+)$', hostname)
+    if m:
+        user = m.groupdict()['user']
+        vm = Vm(m.groupdict()['vm'])
+    else:
+        user = None
+        vm = Vm(hostname)
+
+    try:
+        port = [pf['host port'] for pf in vm.port_forward
+                if pf['name'] == 'ssh'][0]
+    except IndexError:
+        sys.stderr.write('%s has no port forward settings named "ssn".' % vm.name)
+        sys.exit(1)
+
+    if user:
+        return ['-p', port,  '%s@localhost' % user]
+    else:
+        return ['-p', port, 'localhost']
 
 
 if __name__ == '__main__':
@@ -18,31 +40,21 @@ if __name__ == '__main__':
     if len(sys.argv) < 2:
         help()
 
-    dest = sys.argv[1]
-    m = re.match('^(?P<user>.+)@(?P<vm>.+)$', dest)
-    if m:
-        user = m.groupdict()['user']
-        vm = Vm(m.groupdict()['vm'])
-    else:
-        user = None
-        vm = Vm(dest)
+    cmd = ['ssh']
+    iter_args = iter(sys.argv[1:])
 
-    try:
-        port = [pf['host port'] for pf in vm.port_forward
-                if pf['name'] == 'ssh'][0]
-    except IndexError:
-        sys.stderr.write('%s has no port forward settings named "ssh".' %
-                         vm.name)
+    # Parse ssh options
+    for i in iter_args:
+        if i == '--':
+            break
+        else:
+            cmd.append(i)
 
-    cmd = 'ssh'
-    args = ['ssh', '-p', port]
+    # Parse VM name and change it to port and localhost.
+    cmd.extend(parse_host(cmd.pop()))
 
-    if user:
-        args.append('%s@127.0.0.1' % user)
-    else:
-        args.append('localhost')
+    # Parse ssh commands
+    for i in iter_args:
+        cmd.append(i)
 
-    if len(sys.argv) > 2:
-        args = args + sys.argv[2:]
-
-    os.execvp(cmd, args)
+    os.execvp('ssh', cmd)
