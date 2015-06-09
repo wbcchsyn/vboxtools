@@ -22,6 +22,9 @@ def parse_host(hostname):
         user = None
         vm = Vm(hostname)
 
+    if not vm.is_running:
+        raise RuntimeError("%s is down now." % vm.name)
+
     try:
         port = [pf['host port'] for pf in vm.port_forward
                 if pf['name'] == 'ssh'][0]
