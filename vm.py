@@ -286,6 +286,13 @@ class Vm(object):
 
         _call(*cmd)
 
+    def mount_guest_additions(self):
+        cmd = [VBoxManage, 'storageattach', self.uuid, '--storagectl', 'IDE',
+               '--port', '1', '--device', '0', '--type', 'dvddrive',
+               '--medium', 
+               '/Applications/VirtualBox.app/Contents/MacOS/'
+               'VBoxGuestAdditions.iso']
+
     def snap_list(self):
         """ Return list of snapshot dicts. """
 
